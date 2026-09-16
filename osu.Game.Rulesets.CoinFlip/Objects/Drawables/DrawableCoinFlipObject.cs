@@ -12,7 +12,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
 {
-    public partial class DrawableCoinFlipObject : DrawableHitObject<CoinFlipObject>
+    public partial class DrawableCoinFlipObject(CoinFlipObject hitObject) : DrawableHitObject<CoinFlipObject>(hitObject)
     {
         public const double TIME_PREEMPT = max_single_flip_time * max_flip_count + 700;
         private const double time_fade = 400;
@@ -36,19 +36,6 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
         private int flipCount;
         private double flipSpeed;
         private bool resultIsHeads;
-
-        public DrawableCoinFlipObject(CoinFlipObject hitObject)
-            : base(hitObject)
-        {
-            Random r = new Random();
-
-            resultIsHeads = r.NextDouble() < HeadsWeight;
-
-            flipSpeed = r.NextDouble() * (max_single_flip_time - min_single_flip_time) + min_single_flip_time;
-            flipCount = r.Next() % (max_flip_count - min_flip_count + 1) + min_flip_count;
-
-            flipTime = flipCount * flipSpeed;
-        }
 
         [BackgroundDependencyLoader]
         private void load(TextureStore textures)
@@ -95,6 +82,15 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
 
         protected override void UpdateInitialTransforms()
         {
+            Random r = new Random();
+            Console.WriteLine(HeadsWeight);
+            resultIsHeads = r.NextDouble() < HeadsWeight;
+
+            flipSpeed = r.NextDouble() * (max_single_flip_time - min_single_flip_time) + min_single_flip_time;
+            flipCount = r.Next() % (max_flip_count - min_flip_count + 1) + min_flip_count;
+
+            flipTime = flipCount * flipSpeed;
+
             this.FadeInFromZero(time_fade);
 
             bool isHeads = resultIsHeads == (flipCount % 2 == 0);

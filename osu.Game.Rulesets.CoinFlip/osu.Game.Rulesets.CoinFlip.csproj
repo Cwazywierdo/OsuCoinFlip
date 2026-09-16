@@ -12,7 +12,4 @@
   <ItemGroup>
     <PackageReference Include="ppy.osu.Game" Version="2026.730.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Mods\" />
-  </ItemGroup>
 </Project>

@@ -2,6 +2,7 @@
 using osu.Framework.Graphics;
 using osu.Game.Beatmaps;
 using osu.Game.Rulesets.CoinFlip.Beatmaps;
+using osu.Game.Rulesets.CoinFlip.Mods;
 using osu.Game.Rulesets.CoinFlip.UI;
 using osu.Game.Rulesets.Difficulty;
 using osu.Game.Rulesets.Mods;
@@ -26,8 +27,8 @@ namespace osu.Game.Rulesets.CoinFlip
         {
             switch (type)
             {
-                //case ModType.Automation:
-                //    return new[] { new CoinFlipModAutoplay() };
+                case ModType.Conversion:
+                    return [new CoinFlipModWeighted()];
 
                 default:
                     return [];
