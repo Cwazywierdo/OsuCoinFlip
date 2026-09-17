@@ -10,7 +10,7 @@ using osuTK;
 
 namespace osu.Game.Rulesets.CoinFlip.UI
 {
-    public partial class DrawableCoin(Ruleset ruleset) : Container
+    public partial class DrawableCoin(TextureStore textures) : Container
     {
         private const float coin_size = 280;
         private const double fade_duration = 100;
@@ -41,8 +41,6 @@ namespace osu.Game.Rulesets.CoinFlip.UI
         [BackgroundDependencyLoader]
         private void load(IRenderer renderer)
         {
-            TextureStore textures = new TextureStore(renderer, new TextureLoaderStore(ruleset.CreateResourceStore()), false);
-
             Size = new Vector2(coin_size);
             Origin = Anchor.Centre;
             Anchor = Anchor.Centre;

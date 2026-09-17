@@ -15,12 +15,9 @@ namespace osu.Game.Rulesets.CoinFlip
         private readonly Ruleset ruleset = ruleset;
 
         [Resolved]
-        private OsuGame game { get; set; }
-
-        [Resolved]
         private Bindable<RulesetInfo> activeRuleset { get; set; }
 
-        private DrawableCoin coin;
+        private CoinSpawner coinSpawner;
 
         [BackgroundDependencyLoader]
         private void load(IRenderer renderer)
@@ -30,9 +27,16 @@ namespace osu.Game.Rulesets.CoinFlip
 
         protected override void LoadComplete()
         {
-            base.LoadComplete();
-            if (isChildOf<ToolbarRulesetSelector>())
+            if (getParent<ToolbarRulesetTabButton>() is ToolbarRulesetTabButton b)
             {
+                b.Add(coinSpawner = new CoinSpawner(ruleset)
+                {
+                    Origin = Anchor.Centre,
+                    Anchor = Anchor.Centre,
+                    RelativeSizeAxes = Axes.Both,
+                });
+
+                // In case they switch using keyboard shortcuts
                 activeRuleset.ValueChanged += r =>
                 {
                     string coinFlipName = new CoinFlipRuleset().ShortName;
@@ -41,42 +45,58 @@ namespace osu.Game.Rulesets.CoinFlip
                         if (r.OldValue.ShortName != coinFlipName)
                             activeRuleset.Value = r.OldValue;
 
-                        createCoin();
+                        coinSpawner.createCoin();
                     }
                 };
             }
+
+            base.LoadComplete();
         }
 
-#if DEBUG
-        protected override bool OnClick(ClickEvent e)
-        {
-            createCoin();
-            return base.OnClick(e);
-        }
-#endif
-
-        private void createCoin()
-        {
-            if (coin?.IsAlive ?? false)
-            {
-                if (coin.FlipComplete)
-                    coin.Flip();
-            }
-            else
-                game.Add(coin = new DrawableCoin(ruleset));
-        }
-
-        private bool isChildOf<T>() where T : Drawable
+        private T getParent<T>() where T : Drawable
         {
             Drawable d = Parent;
             while (d != null)
             {
                 if (d.GetType() == typeof(T))
-                    return true;
+                    return d as T;
 
                 d = d.Parent;
             }
-            return false;
+            return null;
+        }
+
+        private partial class CoinSpawner(Ruleset ruleset) : Drawable
+        {
+            [Resolved]
+            private OsuGame game { get; set; }
+
+            private DrawableCoin coin;
+
+            private TextureStore textures;
+
+            [BackgroundDependencyLoader]
+            private void load(IRenderer renderer)
+            {
+                textures = new TextureStore(renderer, new TextureLoaderStore(ruleset.CreateResourceStore()), false);
+            }
+
+            protected override bool OnClick(ClickEvent e)
+            {
+                createCoin();
+                return true;
+            }
+
+            public void createCoin()
+            {
+                if (coin?.IsAlive ?? false)
+                {
+                    if (coin.FlipComplete)
+                        coin.Flip();
+                }
+                else
+                    game.Add(coin = new DrawableCoin(textures));
+            }
         }
     }
 }
