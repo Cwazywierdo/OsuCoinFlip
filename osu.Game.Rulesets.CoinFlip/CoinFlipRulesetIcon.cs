@@ -57,7 +57,12 @@ namespace osu.Game.Rulesets.CoinFlip
 
         private void createCoin()
         {
-            if (!coin?.IsAlive ?? true)
+            if (coin?.IsAlive ?? false)
+            {
+                if (coin.FlipComplete)
+                    coin.Flip();
+            }
+            else
                 game.Add(coin = new DrawableCoin(ruleset));
         }
 

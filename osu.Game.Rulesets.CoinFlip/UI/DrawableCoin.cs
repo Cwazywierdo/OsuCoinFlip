@@ -21,16 +21,20 @@ namespace osu.Game.Rulesets.CoinFlip.UI
         private const double min_flip_time = 1100;
         private const double max_flip_time = 1700;
 
-        private const int min_flip_count = 5;
-        private const int max_flip_count = 10;
+        private const int min_flip_count = 3;
+        private const int max_flip_count = 5;
 
-        private const double min_single_flip_duration = 150;
+        private const double min_half_flip_duration = 150;
 
         private Drawable flipContainer;
         private Sprite headsSprite;
         private Sprite tailsSprite;
 
+        public bool FlipComplete { get; set; } = false;
+
         public double HeadsWeight = 0.5;
+
+        private bool isHeads = false;
 
         [BackgroundDependencyLoader]
         private void load(IRenderer renderer)
@@ -70,24 +74,7 @@ namespace osu.Game.Rulesets.CoinFlip.UI
         protected override void LoadComplete()
         {
             Random r = new Random();
-            bool resultIsHeads = r.NextDouble() < HeadsWeight;
-
-            int flipCount = r.Next() % (max_flip_count - min_flip_count + 1) + min_flip_count;
-            double flipDuration = (max_flip_time - min_flip_time) + min_flip_time;
-
-            double single_flip_duration = flipDuration / flipCount;
-
-            if (single_flip_duration > min_single_flip_duration)
-            {
-                single_flip_duration = min_single_flip_duration;
-                flipDuration = single_flip_duration * flipCount;
-            }
-
-            int flipDirection = (r.Next() % 2) * 2 - 1;
-
-            this.FadeInFromZero(fade_duration);
-
-            bool isHeads = resultIsHeads == (flipCount % 2 == 0);
+            isHeads = r.NextDouble() < 0.5;
 
             if (isHeads)
             {
@@ -100,47 +87,65 @@ namespace osu.Game.Rulesets.CoinFlip.UI
                 tailsSprite.FadeIn();
             }
 
-            using (BeginDelayedSequence(fade_duration + pre_flip_linger_duration))
-            {
-                this.ScaleTo(1.3f, flipDuration * 0.5, Easing.OutQuad).MoveToOffset(new Vector2(0, -flip_height), flipDuration * 0.5, Easing.OutQuad)
-                    .Then().ScaleTo(1, flipDuration * 0.5, Easing.InQuad).MoveToOffset(new Vector2(0, flip_height), flipDuration * 0.5, Easing.InQuad)
-                    .Then().Delay(post_flip_linger_duration).Then().FadeOut(fade_duration).Then().Expire();
+            this.FadeInFromZero(fade_duration);
 
-                flipContainer.RotateTo(360 * flipDirection, flipDuration);
-
-                TransformSequence<Sprite> headsSpriteSequence = headsSprite.Delay(single_flip_duration / 2).Then();
-                TransformSequence<Sprite> tailsSpriteSequence = tailsSprite.Delay(single_flip_duration / 2).Then();
-                TransformSequence<Drawable> flipSequence = flipContainer.Delay(0).Then();
-
-                for (int i = 0; i < flipCount; i++)
-                {
-                    flipSequence = flipSequence.ScaleTo(new Vector2(-1, 1), single_flip_duration, Easing.InOutSine).Then().ScaleTo(1).Then();
-
-                    if (isHeads)
-                    {
-                        headsSpriteSequence = headsSpriteSequence.FadeOut().Delay(single_flip_duration).Then();
-                        tailsSpriteSequence = tailsSpriteSequence.FadeIn().ScaleTo(new Vector2(-1, 1)).Delay(single_flip_duration / 2).Then().ScaleTo(1).Delay(single_flip_duration / 2).Then();
-                    }
-                    else
-                    {
-                        headsSpriteSequence = headsSpriteSequence.FadeIn().ScaleTo(new Vector2(-1, 1)).Delay(single_flip_duration / 2).Then().ScaleTo(1).Delay(single_flip_duration / 2).Then();
-                        tailsSpriteSequence = tailsSpriteSequence.FadeOut().Delay(single_flip_duration).Then();
-                    }
-
-                    isHeads = !isHeads;
-                }
-            }
+            this.Delay(fade_duration + pre_flip_linger_duration).Then().Schedule(Flip);
 
             base.LoadComplete();
         }
 
-        //protected override void CheckForResult(bool userTriggered, double timeOffset)
-        //{
-        //    if (timeOffset >= linger_time)
-        //        ApplyMaxResult();
-        //}
+        public void Flip()
+        {
+            FlipComplete = false;
 
-        //protected override double InitialLifetimeOffset => TIME_PREEMPT;
+            ClearTransforms(true);
 
+            this.FadeIn((1 - Alpha) * fade_duration);
+
+            Random r = new Random();
+
+            bool resultIsHeads = r.NextDouble() < HeadsWeight;
+
+            int fullFlips = r.Next() % (max_flip_count - min_flip_count + 1) + min_flip_count;
+            int halfFlips = 2 * fullFlips + (resultIsHeads == isHeads ? 0 : 1);
+
+            double coinFlipDuration = r.NextDouble() * (max_flip_time - min_flip_time) + min_flip_time;
+
+            double halfFlipDuration = coinFlipDuration / halfFlips;
+
+            if (halfFlipDuration > min_half_flip_duration)
+            {
+                halfFlipDuration = min_half_flip_duration;
+                coinFlipDuration = halfFlipDuration * halfFlips;
+            }
+
+            this.ScaleTo(1.3f, coinFlipDuration * 0.5, Easing.OutQuad).MoveToOffset(new Vector2(0, -flip_height), coinFlipDuration * 0.5, Easing.OutQuad)
+                .Then().ScaleTo(1, coinFlipDuration * 0.5, Easing.InQuad).MoveToOffset(new Vector2(0, flip_height), coinFlipDuration * 0.5, Easing.InQuad)
+                .Then().Schedule(() => FlipComplete = true).Delay(post_flip_linger_duration).Then().FadeOut(fade_duration).Then().Expire();
+
+            flipContainer.Spin(coinFlipDuration, (RotationDirection)(r.Next() % 2), 0, 1);
+
+            TransformSequence<Sprite> headsSpriteSequence = headsSprite.Delay(halfFlipDuration / 2).Then();
+            TransformSequence<Sprite> tailsSpriteSequence = tailsSprite.Delay(halfFlipDuration / 2).Then();
+            TransformSequence<Drawable> flipSequence = flipContainer.Delay(0).Then();
+
+            for (int i = 0; i < halfFlips; i++)
+            {
+                flipSequence = flipSequence.ScaleTo(new Vector2(-1, 1), halfFlipDuration, Easing.InOutSine).Then().ScaleTo(1).Then();
+
+                if (isHeads)
+                {
+                    headsSpriteSequence = headsSpriteSequence.FadeOut().Delay(halfFlipDuration).Then();
+                    tailsSpriteSequence = tailsSpriteSequence.FadeIn().ScaleTo(new Vector2(-1, 1)).Delay(halfFlipDuration / 2).Then().ScaleTo(1).Delay(halfFlipDuration / 2).Then();
+                }
+                else
+                {
+                    headsSpriteSequence = headsSpriteSequence.FadeIn().ScaleTo(new Vector2(-1, 1)).Delay(halfFlipDuration / 2).Then().ScaleTo(1).Delay(halfFlipDuration / 2).Then();
+                    tailsSpriteSequence = tailsSpriteSequence.FadeOut().Delay(halfFlipDuration).Then();
+                }
+
+                isHeads = !isHeads;
+            }
+        }
     }
 }
