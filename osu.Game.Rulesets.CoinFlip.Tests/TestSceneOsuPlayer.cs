@@ -6,6 +6,6 @@ namespace osu.Game.Rulesets.CoinFlip.Tests
     [TestFixture]
     public partial class TestSceneOsuPlayer : PlayerTestScene
     {
-        protected override Ruleset CreatePlayerRuleset() => new CoinFlip();
+        protected override Ruleset CreatePlayerRuleset() => new CoinFlipRuleset();
     }
 }
