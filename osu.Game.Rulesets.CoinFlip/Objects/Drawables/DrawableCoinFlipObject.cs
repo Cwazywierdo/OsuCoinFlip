@@ -42,7 +42,7 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
         private Sprite tailsSprite;
         private Drawable resultCounter;
 
-        public bool FlipComplete { get; set; } = false;
+        public bool FlipComplete { get; set; } = true;
 
         public double HeadsWeight = 0.5;
 
@@ -57,7 +57,7 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
         private Bindable<double> flipSpeedMultiplier = new();
 
         [BackgroundDependencyLoader]
-        private void load(IRenderer renderer, TextureStore textures, CoinFlipRulesetConfigManager config)
+        private void load(IRenderer renderer, TextureStore textures, CoinFlipRulesetConfigManager config, CoinFlipInputManager input)
         {
             Size = new Vector2(coin_size);
             Origin = Anchor.Centre;
@@ -143,6 +143,8 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
 
             totalHeads.ValueChanged += e => totalHeadsText.Text = e.NewValue.ToString();
             totalTails.ValueChanged += e => totalTailsText.Text = e.NewValue.ToString();
+
+            input.mouseDown += _ => Flip();
         }
 
         protected override void LoadComplete()
@@ -178,6 +180,9 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
 
         public void Flip()
         {
+            if (!FlipComplete)
+                return;
+
             FlipComplete = false;
 
             Random r = new Random();
@@ -245,8 +250,7 @@ namespace osu.Game.Rulesets.CoinFlip.Objects.Drawables
 
         public bool OnPressed(KeyBindingPressEvent<CoinFlipAction> e)
         {
-            if (FlipComplete)
-                Flip();
+            Flip();
 
             return true;
         }

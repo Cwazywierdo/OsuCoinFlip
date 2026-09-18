@@ -48,7 +48,6 @@ namespace osu.Game.Rulesets.CoinFlip
         {
             return [
                 new KeyBinding(InputKey.Space, CoinFlipAction.FlipButton),
-                new KeyBinding(InputKey.MouseLeft, CoinFlipAction.FlipButton),
                 ];
         }
 
