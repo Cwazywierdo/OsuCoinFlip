@@ -8,8 +8,6 @@ namespace osu.Game.Rulesets.CoinFlip
 {
     internal partial class CoinFlipSettingsSubsection(Ruleset ruleset) : RulesetSettingsSubsection(ruleset)
     {
-        protected override LocalisableString Header => "Coin Flip";
-
         private Bindable<bool> showResultCounter = new BindableBool(true);
 
         private SettingsItemV2 showResultCounterAfterNRollsSettings;
